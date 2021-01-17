@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +10,7 @@ import (
 
 const QPrefix = "**Q:**"
 const APrefix = "**A:**"
+const MultiAPrefix = ">"
 
 func init() {
 	log.SetPrefix("ankiparser: ")
@@ -18,35 +18,15 @@ func init() {
 }
 
 func readQAndAFromFile(filename string) []string {
-	log.Printf("Parsing file [%v]", filename)
-	file, err := os.Open(filename)
-
-	if err != nil {
-		log.Fatal(err)
+	var qAndAs []string
+	switch filepath.Ext(filename) {
+	default:
+	case ".md":
+		qAndAs = readQAndAFromMd(filename)
+	case ".ipynb":
+		qAndAs = readQAndAFromIpynb(filename)
 	}
-
-	defer func() {
-		err := file.Close()
-		log.Fatal(err)
-	}()
-
-	scanner := bufio.NewScanner(file)
-
-	scanner.Scan()
-
-	var text []string
-
-	for scanner.Scan() {
-		if line := scanner.Text(); strings.Contains(line, APrefix) || strings.Contains(line, QPrefix) {
-			text = append(text, line)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	return text
+	return qAndAs
 }
 
 func afterPrefix(s string, prefix string) string {
